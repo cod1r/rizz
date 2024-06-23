@@ -1,18 +1,29 @@
 import { useRef, useState, useEffect } from "react";
 import "./App.css";
 
-function useAudio(performFourier: boolean) {
+function useAudio({ performFourier, submitted }: { performFourier: boolean, submitted: boolean }) {
   const audioContext = useRef<AudioContext | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioContext.current = new AudioContext();
     audio.current = new Audio();
-    audioContext.current.createMediaElementSource(audio.current);
-  }, []);
+  }, [])
+
+  useEffect(() => {
+    if (submitted) {
+      audioContext.current = new AudioContext();
+      audioContext.current.createMediaElementSource(audio.current!);
+    }
+  }, [submitted]);
 
   useEffect(() => {
     if (performFourier) {
+      let analyserNode = new AnalyserNode(audioContext.current!);
+      let floatArr = new Float32Array(analyserNode.fftSize);
+      analyserNode.getFloatFrequencyData(floatArr);
+      for (let i = 0; i < floatArr.length; ++i) {
+        console.log(floatArr[i])
+      }
     }
   }, [performFourier]);
 
@@ -24,7 +35,7 @@ function App() {
   const [submitted, setSubmitted] = useState(false);
   const [performFourier, setPerformFourier] = useState(false);
 
-  const audio = useAudio(performFourier);
+  const audio = useAudio({ performFourier, submitted });
   return (
     <div className="flex items-center justify-center w-full h-full">
       <div>
