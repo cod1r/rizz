@@ -1,33 +1,32 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import "./App.css";
 
 function useAudio({ performFourier, submitted }: { performFourier: boolean, submitted: boolean }) {
-  const audioContext = useRef<AudioContext | null>(null);
-  const audio = useRef<HTMLAudioElement | null>(null);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audio.current = new Audio();
+    setAudio(new Audio())
+    setAudioContext(new AudioContext())
   }, [])
 
   useEffect(() => {
-    if (submitted) {
-      audioContext.current = new AudioContext();
-      audioContext.current.createMediaElementSource(audio.current!);
+    if (submitted && audio && audioContext) {
+      if (audio === null) throw Error("audio is null")
+      audioContext.createMediaElementSource(audio);
     }
   }, [submitted]);
 
   useEffect(() => {
-    if (performFourier) {
-      let analyserNode = new AnalyserNode(audioContext.current!);
-      let floatArr = new Float32Array(analyserNode.fftSize);
-      analyserNode.getFloatFrequencyData(floatArr);
-      for (let i = 0; i < floatArr.length; ++i) {
-        console.log(floatArr[i])
-      }
+    if (performFourier && audio && audioContext) {
+      if (audioContext === null) throw Error("audio context is null")
+      let analyserNode = new AnalyserNode(audioContext);
+      let arr = new Uint8Array(analyserNode.fftSize);
+      console.log(audio, audio.duration)
     }
   }, [performFourier]);
 
-  return audio.current;
+  return audio;
 }
 
 function App() {
@@ -36,6 +35,12 @@ function App() {
   const [performFourier, setPerformFourier] = useState(false);
 
   const audio = useAudio({ performFourier, submitted });
+  const handleSubmit = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
+    setSubmitted(true);
+    if (audio !== null) {
+      audio.src = URL.createObjectURL(e.currentTarget.files![0]);
+    }
+  }, [audio])
   return (
     <div className="flex items-center justify-center w-full h-full">
       <div>
@@ -55,12 +60,7 @@ function App() {
           {submitted ? "Perform FT" : "Choose audio file"}
         </button>
         <input
-          onInput={(e) => {
-            setSubmitted(true);
-            if (audio !== null) {
-              audio.src = URL.createObjectURL(e.currentTarget.files![0]);
-            }
-          }}
+          onInput={handleSubmit}
           ref={inputFile}
           style={{ display: "none" }}
           type="file"
