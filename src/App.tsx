@@ -4,6 +4,7 @@ import "./App.css";
 function useAudio({ performFourier, submitted }: { performFourier: boolean, submitted: boolean }) {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [mediaElementSrc, setMediaElementSource] = useState<MediaElementAudioSourceNode | null>(null)
 
   useEffect(() => {
     setAudio(new Audio())
@@ -12,17 +13,26 @@ function useAudio({ performFourier, submitted }: { performFourier: boolean, subm
 
   useEffect(() => {
     if (submitted && audio && audioContext) {
-      if (audio === null) throw Error("audio is null")
-      audioContext.createMediaElementSource(audio);
+      setMediaElementSource(audioContext.createMediaElementSource(audio))
     }
   }, [submitted]);
 
   useEffect(() => {
-    if (performFourier && audio && audioContext) {
-      if (audioContext === null) throw Error("audio context is null")
+    if (performFourier && audio && audioContext && mediaElementSrc) {
       let analyserNode = new AnalyserNode(audioContext);
-      let arr = new Uint8Array(analyserNode.fftSize);
-      console.log(audio, audio.duration)
+      let arr = new Float32Array(analyserNode.frequencyBinCount);
+      mediaElementSrc.connect(analyserNode)
+      audio.play().then(() => {
+        audioContext.resume().then(() => {
+          setInterval(() => {
+            console.log(audioContext.currentTime)
+            analyserNode.getFloatFrequencyData(arr)
+            for (let i = 0; i < arr.length; ++i) {
+              console.log(arr[i])
+            }
+          }, 1000)
+        })
+      })
     }
   }, [performFourier]);
 
