@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import "./App.css";
 
-function useAudio({ performFourier, submitted }: { performFourier: boolean, submitted: boolean }) {
+function useAudio({ performFourier, submitted, cvs }: { performFourier: boolean, submitted: boolean, cvs: HTMLCanvasElement | null }) {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [mediaElementSrc, setMediaElementSource] = useState<MediaElementAudioSourceNode | null>(null)
@@ -24,27 +24,42 @@ function useAudio({ performFourier, submitted }: { performFourier: boolean, subm
       mediaElementSrc.connect(analyserNode)
       audio.play().then(() => {
         audioContext.resume().then(() => {
-          setInterval(() => {
-            console.log(audioContext.currentTime)
+          const draw = () => {
+            if (!cvs) throw Error("cvs null")
+            requestAnimationFrame(draw)
             analyserNode.getFloatFrequencyData(arr)
+            const xStep = cvs.width / arr.length
+            const ctx = cvs.getContext("2d")
+            if (!ctx) throw Error("ctx null")
+            ctx.clearRect(0, 0, cvs.width, cvs.height)
+            ctx.beginPath()
+            ctx.strokeStyle = "rgb(254 243 199)"
+            ctx.moveTo(0, cvs.height / 2)
             for (let i = 0; i < arr.length; ++i) {
-              console.log(arr[i])
+              const y = cvs.height / 2 + -arr[i] / 128.0 * cvs.height / 2
+              ctx.lineTo(i * xStep, y)
             }
-          }, 1000)
+            ctx.lineTo(cvs.width, cvs.height / 2)
+            ctx.stroke()
+          }
+          if (cvs) {
+            requestAnimationFrame(draw)
+          }
         })
       })
     }
-  }, [performFourier]);
+  }, [performFourier, audio, audioContext, mediaElementSrc, cvs]);
 
   return audio;
 }
 
 function App() {
   const inputFile = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [performFourier, setPerformFourier] = useState(false);
 
-  const audio = useAudio({ performFourier, submitted });
+  const audio = useAudio({ performFourier, submitted, cvs: canvasRef.current });
   const handleSubmit = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
     setSubmitted(true);
     if (audio !== null) {
@@ -52,7 +67,7 @@ function App() {
     }
   }, [audio])
   return (
-    <div className="flex items-center justify-center w-full h-full">
+    <div className="flex flex-col items-center justify-center w-full h-full">
       <div>
         <button
           style={{
@@ -70,15 +85,16 @@ function App() {
           {submitted ? "Perform FT" : "Choose audio file"}
         </button>
         <input
+          className="hidden"
           onInput={handleSubmit}
           ref={inputFile}
-          style={{ display: "none" }}
           type="file"
           id="fileInput"
           name="fileInput"
           accept=".mp3,.flac,.wav"
         />
       </div>
+      <canvas ref={canvasRef} className="m-1 border-amber-100 border border-solid"></canvas>
     </div>
   );
 }
