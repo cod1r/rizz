@@ -20,14 +20,14 @@ function useAudio({ performFourier, submitted, cvs }: { performFourier: boolean,
   useEffect(() => {
     if (performFourier && audio && audioContext && mediaElementSrc) {
       let analyserNode = new AnalyserNode(audioContext);
-      let arr = new Float32Array(analyserNode.frequencyBinCount);
+      let arr = new Float32Array(analyserNode.fftSize);
       mediaElementSrc.connect(analyserNode)
       audio.play().then(() => {
         audioContext.resume().then(() => {
           const draw = () => {
             if (!cvs) throw Error("cvs null")
             requestAnimationFrame(draw)
-            analyserNode.getFloatFrequencyData(arr)
+            analyserNode.getFloatTimeDomainData(arr)
             const xStep = cvs.width / arr.length
             const ctx = cvs.getContext("2d")
             if (!ctx) throw Error("ctx null")
@@ -36,10 +36,9 @@ function useAudio({ performFourier, submitted, cvs }: { performFourier: boolean,
             ctx.strokeStyle = "rgb(254 243 199)"
             ctx.moveTo(0, cvs.height / 2)
             for (let i = 0; i < arr.length; ++i) {
-              const y = cvs.height / 2 + -arr[i] / 128.0 * cvs.height / 2
+              const y = cvs.height / 2 + -arr[i] * cvs.height
               ctx.lineTo(i * xStep, y)
             }
-            ctx.lineTo(cvs.width, cvs.height / 2)
             ctx.stroke()
           }
           if (cvs) {
