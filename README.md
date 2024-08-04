@@ -22,4 +22,8 @@ So after some googling, I found out about the discrete fourier transform and the
 
 Okay, onto FFT's.
  - Nevermind. I think I'm going to just get the frequency data from the audio context and then try to operate
-   on that.
+   on that. Doing computation with complex numbers in javascript is not it (I'm not feeling it rn).
+
+Discrete vs Continuous is a very important concept to remember in digital signal processing
+ - Whole time I was confused on how to apply discrete values to continuous concepts and equations when
+   there are other equations that are derived from continuous equations specifically for discrete values
