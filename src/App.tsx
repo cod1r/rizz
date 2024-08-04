@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from "react";
+import { createMp3Encoder } from "wasm-media-encoders"
 import "./App.css";
 
 function useAudio({ performFourier, submitted, cvs }: { performFourier: boolean, submitted: boolean, cvs: HTMLCanvasElement | null }) {

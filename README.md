@@ -12,3 +12,14 @@
  4. pi is 3.14... but can represent any number x.
  5. so now we have (1 + x / m) ^ m. again something similar to the equations above
  6. plug in pi * i as x as m goes to infinity and the final answer should come really close or approach -1
+
+
+I didn't know how to use discrete values to get a fourier transform because the fourier transform is only if you
+have a waveform function/equation.
+
+So after some googling, I found out about the discrete fourier transform and the discrete-time fourier transform.
+ - I don't know how to use DFT's
+
+Okay, onto FFT's.
+ - Nevermind. I think I'm going to just get the frequency data from the audio context and then try to operate
+   on that.
