@@ -27,3 +27,16 @@ Okay, onto FFT's.
 Discrete vs Continuous is a very important concept to remember in digital signal processing
  - Whole time I was confused on how to apply discrete values to continuous concepts and equations when
    there are other equations that are derived from continuous equations specifically for discrete values
+
+Discrete Fourier Transform:
+
+Great Video by [Simon Xu](https://www.youtube.com/watch?v=mkGsMWi_j4Q) on youtube
+
+    Notes:
+        - When the wave form function and the analysing function are similar, they'll multiply and sum
+        to a large coefficient and if they are disimilar, they'll multiply and sum to a small coefficient
+        - a "frequency bin" is just a discrete frequency value after the discrete fourier transform is applied
+        - use euler's formula (cos(x) + isin(x)) instead of e^(i * x)
+        - the nyquist frequency is also known as the folding frequency
+            - get rid of all values above the nyquist limit (sampling frequency / 2)
+            - double all values under the nyquist limit

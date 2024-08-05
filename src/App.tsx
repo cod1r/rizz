@@ -126,7 +126,11 @@ function App() {
             }}
             onClick={() => {
               if (submitted) {
-                setPlayAudio(true);
+                if (playAudio) {
+                  setPlayAudio(false);
+                } else {
+                  setPlayAudio(true);
+                }
               }
             }}
           >
@@ -138,11 +142,15 @@ function App() {
             }}
             onClick={() => {
               if (submitted) {
-                setLoopAudio(true);
+                if (loopAudio) {
+                  setLoopAudio(false);
+                } else {
+                  setLoopAudio(true);
+                }
               }
             }}
           >
-            {submitted ? "loop" : "No audio to loop"}
+            {submitted ? (loopAudio ? "Don't loop":"loop") : "No audio to loop"}
           </button>
           <button
             style={{
