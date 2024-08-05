@@ -22,13 +22,39 @@ function useAudio({
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
   useEffect(() => {
-    setAudio(new Audio());
-    setAudioContext(new AudioContext());
+    const newAudio = new Audio()
+    setAudio(newAudio);
+    const newAudioContext = new AudioContext()
+    setAudioContext(newAudioContext);
+    return () => { audioContext?.close() }
   }, []);
 
   useEffect(() => {
-    if (analyserNode && playAudio && audioContext) {
-      analyserNode.connect(audioContext.destination);
+    if (audio && analyserNode && playAudio && audioContext && mediaElementSrc) {
+      mediaElementSrc.connect(analyserNode).connect(audioContext.destination);
+      audio.play().then(() => {
+      let arr = new Float32Array(analyserNode.fftSize);
+      const draw = () => {
+        if (!cvs) throw Error("cvs null");
+        requestAnimationFrame(draw);
+        analyserNode.getFloatTimeDomainData(arr);
+        const xStep = cvs.width / arr.length;
+        const ctx = cvs.getContext("2d");
+        if (!ctx) throw Error("ctx null");
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.beginPath();
+        ctx.strokeStyle = "rgb(254 243 199)";
+        ctx.moveTo(0, cvs.height / 2);
+        for (let i = 0; i < arr.length; ++i) {
+          const y = cvs.height / 2 + -arr[i] * cvs.height;
+          ctx.lineTo(i * xStep, y);
+        }
+        ctx.stroke();
+      };
+      if (cvs) {
+        requestAnimationFrame(draw);
+      }
+      }).catch((e) => console.error(e));
     }
 
     if (audio && !playAudio) {
@@ -44,6 +70,7 @@ function useAudio({
     if (submitted && audio && audioContext) {
       setMediaElementSource(audioContext.createMediaElementSource(audio));
       setAnalyserNode(new AnalyserNode(audioContext));
+      audioContext.resume().catch(e => console.error(e));
     }
   }, [submitted]);
 
@@ -55,37 +82,11 @@ function useAudio({
       mediaElementSrc &&
       analyserNode
     ) {
-      let arr = new Float32Array(analyserNode.fftSize);
       let frequencyData = new Float32Array(analyserNode.frequencyBinCount);
       setInterval(() => {
+        analyserNode.getFloatFrequencyData(frequencyData);
         console.log(frequencyData);
       }, 500);
-      mediaElementSrc.connect(analyserNode);
-      audio.play().then(() => {
-        audioContext.resume().then(() => {
-          const draw = () => {
-            if (!cvs) throw Error("cvs null");
-            requestAnimationFrame(draw);
-            analyserNode.getFloatTimeDomainData(arr);
-            analyserNode.getFloatFrequencyData(frequencyData);
-            const xStep = cvs.width / arr.length;
-            const ctx = cvs.getContext("2d");
-            if (!ctx) throw Error("ctx null");
-            ctx.clearRect(0, 0, cvs.width, cvs.height);
-            ctx.beginPath();
-            ctx.strokeStyle = "rgb(254 243 199)";
-            ctx.moveTo(0, cvs.height / 2);
-            for (let i = 0; i < arr.length; ++i) {
-              const y = cvs.height / 2 + -arr[i] * cvs.height;
-              ctx.lineTo(i * xStep, y);
-            }
-            ctx.stroke();
-          };
-          if (cvs) {
-            requestAnimationFrame(draw);
-          }
-        });
-      });
     }
   }, [performFourier, audio, audioContext, mediaElementSrc, cvs]);
 
@@ -133,8 +134,9 @@ function App() {
                 }
               }
             }}
+            disabled={!submitted}
           >
-            {submitted ? (audio?.paused ? "Play":"Pause") : "No audio to play"}
+            {submitted ? (!playAudio ? "Play":"Pause") : "No audio to play"}
           </button>
           <button
             style={{
@@ -149,8 +151,9 @@ function App() {
                 }
               }
             }}
+            disabled={!submitted}
           >
-            {submitted ? (loopAudio ? "Don't loop":"loop") : "No audio to loop"}
+            {submitted ? (loopAudio ? "Don't loop":"Loop") : "No audio to loop"}
           </button>
           <button
             style={{
