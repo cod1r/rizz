@@ -40,3 +40,12 @@ Great Video by [Simon Xu](https://www.youtube.com/watch?v=mkGsMWi_j4Q) on youtub
         - the nyquist frequency is also known as the folding frequency
             - get rid of all values above the nyquist limit (sampling frequency / 2)
             - double all values under the nyquist limit
+
+Decibel
+(because that's what each array value represents for frequency once returned from getFloatFrequencyData()):
+    - relative unit of measurement that is 1 tenth of a Bel
+
+
+Web Audio API Notes:
+    - audio context has a sampleRate
+    - look into how getFloatFrequencyData works and its return format

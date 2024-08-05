@@ -34,6 +34,9 @@ function useAudio({
       mediaElementSrc.connect(analyserNode).connect(audioContext.destination);
       audio.play().then(() => {
       let arr = new Float32Array(analyserNode.fftSize);
+      setInterval(() => {
+        console.log(arr)
+      }, 1000)
       const draw = () => {
         if (!cvs) throw Error("cvs null");
         requestAnimationFrame(draw);
