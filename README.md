@@ -50,3 +50,5 @@ Decibel
 Web Audio API Notes:
     - audio context has a sampleRate
     - look into how getFloatFrequencyData works and its return format
+    - offlineaudiocontext can "render" audio super fast and doesn't need to render it to hardware (" like the speakers ")
+    - How do we get audio info for a certain segment of the audio

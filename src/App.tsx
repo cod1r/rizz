@@ -1,6 +1,32 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { createMp3Encoder } from "wasm-media-encoders";
+import { motion } from "framer-motion"
 import "./App.css";
+
+function AudioSeekerVisual() {
+  const [cursorGrabbing, setCursorGrabbing] = useState(false);
+  return (
+    <div className="h-px relative w-[200px] flex items-center m-2 border border-black-100">
+      <div className="absolute">
+        <motion.div
+          drag="x"
+          dragConstraints={{left: 0, right: 200}}
+          dragElastic={0}
+          className={`h-[20px] w-[10px] bg-black rounded ${cursorGrabbing ? "cursor-grabbing" : "cursor-grab"}`}
+          onPointerEnter={() => {
+            setCursorGrabbing(false);
+          }}
+          onPointerDown={() => {
+            setCursorGrabbing((g) => !g);
+          }}
+          onPointerUp={() => {
+            setCursorGrabbing((g) => !g);
+          }}
+        ></motion.div>
+      </div>
+    </div>
+  );
+}
 
 function useAudio({
   performFourier,
@@ -20,44 +46,51 @@ function useAudio({
   const [mediaElementSrc, setMediaElementSource] =
     useState<MediaElementAudioSourceNode | null>(null);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
+  const [offlineAudioContext, setOfflineAudioContext] =
+    useState<OfflineAudioContext | null>(null);
 
   useEffect(() => {
-    const newAudio = new Audio()
+    const newAudio = new Audio();
     setAudio(newAudio);
-    const newAudioContext = new AudioContext()
+    const newAudioContext = new AudioContext();
     setAudioContext(newAudioContext);
-    return () => { audioContext?.close() }
+    return () => {
+      audioContext?.close();
+    };
   }, []);
 
   useEffect(() => {
     if (audio && analyserNode && playAudio && audioContext && mediaElementSrc) {
       mediaElementSrc.connect(analyserNode).connect(audioContext.destination);
-      audio.play().then(() => {
-      let arr = new Float32Array(analyserNode.fftSize);
-      setInterval(() => {
-        console.log(arr)
-      }, 1000)
-      const draw = () => {
-        if (!cvs) throw Error("cvs null");
-        requestAnimationFrame(draw);
-        analyserNode.getFloatTimeDomainData(arr);
-        const xStep = cvs.width / arr.length;
-        const ctx = cvs.getContext("2d");
-        if (!ctx) throw Error("ctx null");
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.beginPath();
-        ctx.strokeStyle = "rgb(254 243 199)";
-        ctx.moveTo(0, cvs.height / 2);
-        for (let i = 0; i < arr.length; ++i) {
-          const y = cvs.height / 2 + -arr[i] * cvs.height;
-          ctx.lineTo(i * xStep, y);
-        }
-        ctx.stroke();
-      };
-      if (cvs) {
-        requestAnimationFrame(draw);
-      }
-      }).catch((e) => console.error(e));
+      audio
+        .play()
+        .then(() => {
+          let arr = new Float32Array(analyserNode.fftSize);
+          setInterval(() => {
+            console.log(arr);
+          }, 1000);
+          const draw = () => {
+            if (!cvs) throw Error("cvs null");
+            requestAnimationFrame(draw);
+            analyserNode.getFloatTimeDomainData(arr);
+            const xStep = cvs.width / arr.length;
+            const ctx = cvs.getContext("2d");
+            if (!ctx) throw Error("ctx null");
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            ctx.beginPath();
+            ctx.strokeStyle = "rgb(254 243 199)";
+            ctx.moveTo(0, cvs.height / 2);
+            for (let i = 0; i < arr.length; ++i) {
+              const y = cvs.height / 2 + -arr[i] * cvs.height;
+              ctx.lineTo(i * xStep, y);
+            }
+            ctx.stroke();
+          };
+          if (cvs) {
+            requestAnimationFrame(draw);
+          }
+        })
+        .catch((e) => console.error(e));
     }
 
     if (audio && !playAudio) {
@@ -73,7 +106,13 @@ function useAudio({
     if (submitted && audio && audioContext) {
       setMediaElementSource(audioContext.createMediaElementSource(audio));
       setAnalyserNode(new AnalyserNode(audioContext));
-      audioContext.resume().catch(e => console.error(e));
+      audioContext.resume().catch((e) => console.error(e));
+      const offlineAudioContext = new OfflineAudioContext({
+        numberOfChannels: 2,
+        length: audio.duration,
+        sampleRate: audioContext.sampleRate,
+      });
+      setOfflineAudioContext(offlineAudioContext);
     }
   }, [submitted]);
 
@@ -122,12 +161,10 @@ function App() {
   );
   return (
     <div className="flex flex-col items-center justify-center w-full h-full">
-      <div>
+      <div className="min-w-fit">
         <div className="flex flex-col">
           <button
-            style={{
-              textAlign: "center",
-            }}
+            className="p-1 text-center m-1 border border-solid border-black-100"
             onClick={() => {
               if (submitted) {
                 if (playAudio) {
@@ -139,12 +176,10 @@ function App() {
             }}
             disabled={!submitted}
           >
-            {submitted ? (!playAudio ? "Play":"Pause") : "No audio to play"}
+            {submitted ? (!playAudio ? "Play" : "Pause") : "No audio to play"}
           </button>
           <button
-            style={{
-              textAlign: "center",
-            }}
+            className="p-1 text-center m-1 border border-solid border-black-100"
             onClick={() => {
               if (submitted) {
                 if (loopAudio) {
@@ -156,12 +191,14 @@ function App() {
             }}
             disabled={!submitted}
           >
-            {submitted ? (loopAudio ? "Don't loop":"Loop") : "No audio to loop"}
+            {submitted
+              ? loopAudio
+                ? "Don't loop"
+                : "Loop"
+              : "No audio to loop"}
           </button>
           <button
-            style={{
-              textAlign: "center",
-            }}
+            className="p-1 text-center m-1 border border-solid border-black-100"
             onClick={() => {
               if (submitted) {
                 setPerformFourier(true);
@@ -183,10 +220,11 @@ function App() {
           name="fileInput"
           accept=".mp3,.flac,.wav"
         />
+        <AudioSeekerVisual />
       </div>
       <canvas
         ref={canvasRef}
-        className="m-1 border-amber-100 border border-solid"
+        className="m-1 border-black-100 border border-solid"
       ></canvas>
     </div>
   );
