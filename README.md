@@ -40,6 +40,7 @@ Great Video by [Simon Xu](https://www.youtube.com/watch?v=mkGsMWi_j4Q) on youtub
         - the nyquist frequency is also known as the folding frequency
             - get rid of all values above the nyquist limit (sampling frequency / 2)
             - double all values under the nyquist limit
+        - the magnitude of the real + imaginery vector after applying DFT corresponds to the amplitude of the sin wave at that frequency bin at that phase (angle of the vector)
 
 Decibel
 (because that's what each array value represents for frequency once returned from getFloatFrequencyData()):
