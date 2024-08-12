@@ -3,24 +3,25 @@ import { createMp3Encoder } from "wasm-media-encoders";
 import { motion } from "framer-motion"
 import "./App.css";
 
-function AudioSeekerVisual() {
-  const [cursorGrabbing, setCursorGrabbing] = useState(false);
+function AudioSeekerVisual({ audioElement } : { audioElement: HTMLAudioElement | null }) {
+  const [translateX, setTranslateX] = useState(0)
+  useEffect(() => {
+    setTranslateX(audioElement?.currentTime ?? 0 / 200)
+  }, [audioElement, translateX, audioElement?.currentTime])
   return (
     <div className="h-px relative w-[200px] flex items-center m-2 border border-black-100">
       <div className="absolute">
         <motion.div
           drag="x"
+          animate={{ x: translateX }}
           dragConstraints={{left: 0, right: 200}}
-          dragElastic={0}
-          className={`h-[20px] w-[10px] bg-black rounded ${cursorGrabbing ? "cursor-grabbing" : "cursor-grab"}`}
-          onPointerEnter={() => {
-            setCursorGrabbing(false);
-          }}
-          onPointerDown={() => {
-            setCursorGrabbing((g) => !g);
-          }}
-          onPointerUp={() => {
-            setCursorGrabbing((g) => !g);
+          dragElastic={false}
+          dragMomentum={false}
+          className="h-[20px] w-[10px] bg-black rounded"
+          onDrag={(_, info) => {
+            if (!audioElement) return
+            const ratio = info.offset.x / 200
+            audioElement.currentTime = ratio * audioElement.duration
           }}
         ></motion.div>
       </div>
@@ -54,7 +55,17 @@ function useAudio({
     setAudio(newAudio);
     const newAudioContext = new AudioContext();
     setAudioContext(newAudioContext);
+    function canPlayHandler() {
+      const offlineAudioContext = new OfflineAudioContext({
+        numberOfChannels: 2,
+        length: newAudioContext.sampleRate * newAudio.duration,
+        sampleRate: newAudioContext.sampleRate,
+      });
+      setOfflineAudioContext(offlineAudioContext);
+    }
+    newAudio.addEventListener("canplay", canPlayHandler)
     return () => {
+      newAudio.removeEventListener("canplay", canPlayHandler)
       audioContext?.close();
     };
   }, []);
@@ -66,9 +77,6 @@ function useAudio({
         .play()
         .then(() => {
           let arr = new Float32Array(analyserNode.fftSize);
-          setInterval(() => {
-            console.log(arr);
-          }, 1000);
           const draw = () => {
             if (!cvs) throw Error("cvs null");
             requestAnimationFrame(draw);
@@ -78,7 +86,7 @@ function useAudio({
             if (!ctx) throw Error("ctx null");
             ctx.clearRect(0, 0, cvs.width, cvs.height);
             ctx.beginPath();
-            ctx.strokeStyle = "rgb(254 243 199)";
+            ctx.strokeStyle = "black";
             ctx.moveTo(0, cvs.height / 2);
             for (let i = 0; i < arr.length; ++i) {
               const y = cvs.height / 2 + -arr[i] * cvs.height;
@@ -107,12 +115,6 @@ function useAudio({
       setMediaElementSource(audioContext.createMediaElementSource(audio));
       setAnalyserNode(new AnalyserNode(audioContext));
       audioContext.resume().catch((e) => console.error(e));
-      const offlineAudioContext = new OfflineAudioContext({
-        numberOfChannels: 2,
-        length: audio.duration,
-        sampleRate: audioContext.sampleRate,
-      });
-      setOfflineAudioContext(offlineAudioContext);
     }
   }, [submitted]);
 
@@ -220,7 +222,7 @@ function App() {
           name="fileInput"
           accept=".mp3,.flac,.wav"
         />
-        <AudioSeekerVisual />
+        <AudioSeekerVisual audioElement={audio}/>
       </div>
       <canvas
         ref={canvasRef}
