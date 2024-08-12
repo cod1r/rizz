@@ -137,13 +137,44 @@ function useAudio({
   return audio;
 }
 
+function AudioControls() {
+  const [playAudio, setPlayAudio] = useState(false);
+  const [loopAudio, setLoopAudio] = useState(false);
+  return (
+          <div>
+          <button
+            className="p-1 text-center m-1 border border-solid border-black-100"
+            onClick={() => {
+                if (playAudio) {
+                  setPlayAudio(false);
+                } else {
+                  setPlayAudio(true);
+                }
+            }}
+          >
+            {!playAudio ? "Play" : "Pause"}
+          </button>
+          <button
+            className="p-1 text-center m-1 border border-solid border-black-100"
+            onClick={() => {
+                if (loopAudio) {
+                  setLoopAudio(false);
+                } else {
+                  setLoopAudio(true);
+                }
+            }}
+          >
+            {loopAudio ? "Don't loop" : "Loop"}
+          </button>
+          </div>
+          )
+}
+
 function App() {
   const inputFile = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [performFourier, setPerformFourier] = useState(false);
-  const [playAudio, setPlayAudio] = useState(false);
-  const [loopAudio, setLoopAudio] = useState(false);
 
   const audio = useAudio({
     performFourier,
@@ -165,40 +196,6 @@ function App() {
     <div className="flex flex-col items-center justify-center w-full h-full">
       <div className="min-w-fit">
         <div className="flex flex-col">
-          <button
-            className="p-1 text-center m-1 border border-solid border-black-100"
-            onClick={() => {
-              if (submitted) {
-                if (playAudio) {
-                  setPlayAudio(false);
-                } else {
-                  setPlayAudio(true);
-                }
-              }
-            }}
-            disabled={!submitted}
-          >
-            {submitted ? (!playAudio ? "Play" : "Pause") : "No audio to play"}
-          </button>
-          <button
-            className="p-1 text-center m-1 border border-solid border-black-100"
-            onClick={() => {
-              if (submitted) {
-                if (loopAudio) {
-                  setLoopAudio(false);
-                } else {
-                  setLoopAudio(true);
-                }
-              }
-            }}
-            disabled={!submitted}
-          >
-            {submitted
-              ? loopAudio
-                ? "Don't loop"
-                : "Loop"
-              : "No audio to loop"}
-          </button>
           <button
             className="p-1 text-center m-1 border border-solid border-black-100"
             onClick={() => {
