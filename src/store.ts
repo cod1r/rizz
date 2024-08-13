@@ -1,4 +1,4 @@
-import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit"
+import { configureStore, createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit"
 
 interface AudioControls {
   playing: boolean,
@@ -20,7 +20,7 @@ const audioControlsSlice = createSlice({
     setLooping: (state, action: PayloadAction<boolean>) => {
       state.looping = action.payload
     }
-  }
+  },
 })
 
 interface AppInfo {
@@ -43,8 +43,9 @@ const appInfoSlice = createSlice({
     setSubmitted: (state, action: PayloadAction<boolean>) => {
       state.submitted = action.payload
     }
-  }
+  },
 })
+
 
 export const store = configureStore({
   reducer: {
@@ -52,3 +53,14 @@ export const store = configureStore({
     appInfo: appInfoSlice.reducer
   }
 })
+
+export type RootState = ReturnType<typeof store.getState>
+
+export const getPlaying = (state: RootState) => state.audioControls.playing
+export const getLooping = (state: RootState) => state.audioControls.looping
+
+export const getPerformFourier = (state: RootState) => state.appInfo.performFourier
+export const getSubmitted = (state: RootState) => state.appInfo.submitted
+
+export const { setPlaying, setLooping } = audioControlsSlice.actions
+export const { setPerformFourier, setSubmitted } = appInfoSlice.actions

@@ -1,28 +1,51 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { createMp3Encoder } from "wasm-media-encoders";
-import { motion } from "framer-motion"
+import { motion, useAnimationFrame } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getPlaying,
+  getLooping,
+  getPerformFourier,
+  getSubmitted,
+  setPlaying,
+  setLooping,
+  setPerformFourier,
+  setSubmitted,
+} from "./store";
 import "./App.css";
 
-function AudioSeekerVisual({ audioElement } : { audioElement: HTMLAudioElement | null }) {
-  const [translateX, setTranslateX] = useState(0)
-  useEffect(() => {
-    setTranslateX(audioElement?.currentTime ?? 0 / 200)
-  }, [audioElement, translateX, audioElement?.currentTime])
+function AudioSeekerVisual({
+  audioElement,
+}: {
+  audioElement: HTMLAudioElement | null;
+}) {
+  const d = useDispatch()
+  const seekerRef = useRef<HTMLDivElement | null>(null)
+  useAnimationFrame(() => {
+    if (seekerRef.current) {
+      const ratio = ((audioElement?.currentTime ?? 0) / (audioElement?.duration ?? 1))
+      if (ratio === 1) {
+        d(setPlaying(false))
+      }
+      seekerRef.current.style.transform = `translateX(${ratio * 200}px)`
+    }
+  })
   return (
     <div className="h-px relative w-[200px] flex items-center m-2 border border-black-100">
       <div className="absolute">
         <motion.div
+          ref={seekerRef}
           drag="x"
-          animate={{ x: translateX }}
-          dragConstraints={{left: 0, right: 200}}
+          dragConstraints={{ left: 0, right: 200 }}
           dragElastic={false}
           dragMomentum={false}
           className="h-[20px] w-[10px] bg-black rounded"
           onDrag={(_, info) => {
-            if (!audioElement) return
-            const ratio = info.offset.x / 200
-            audioElement.currentTime = ratio * audioElement.duration
+            if (!audioElement) return;
+            const ratio = info.offset.x / 200;
+            audioElement.currentTime = ratio * audioElement.duration;
           }}
+          layout
         ></motion.div>
       </div>
     </div>
@@ -63,9 +86,9 @@ function useAudio({
       });
       setOfflineAudioContext(offlineAudioContext);
     }
-    newAudio.addEventListener("canplay", canPlayHandler)
+    newAudio.addEventListener("canplay", canPlayHandler);
     return () => {
-      newAudio.removeEventListener("canplay", canPlayHandler)
+      newAudio.removeEventListener("canplay", canPlayHandler);
       audioContext?.close();
     };
   }, []);
@@ -137,44 +160,54 @@ function useAudio({
   return audio;
 }
 
-function AudioControls() {
-  const [playAudio, setPlayAudio] = useState(false);
-  const [loopAudio, setLoopAudio] = useState(false);
+function AudioControls({ audio } : { audio: HTMLAudioElement | null }) {
+  const d = useDispatch();
+  const playing = useSelector(getPlaying);
+  const looping = useSelector(getLooping);
+  const submittedAudioFile = useSelector(getSubmitted)
   return (
-          <div>
-          <button
-            className="p-1 text-center m-1 border border-solid border-black-100"
-            onClick={() => {
-                if (playAudio) {
-                  setPlayAudio(false);
-                } else {
-                  setPlayAudio(true);
-                }
-            }}
-          >
-            {!playAudio ? "Play" : "Pause"}
-          </button>
-          <button
-            className="p-1 text-center m-1 border border-solid border-black-100"
-            onClick={() => {
-                if (loopAudio) {
-                  setLoopAudio(false);
-                } else {
-                  setLoopAudio(true);
-                }
-            }}
-          >
-            {loopAudio ? "Don't loop" : "Loop"}
-          </button>
-          </div>
-          )
+    <div>
+      <div className="flex">
+        <button
+          className="p-1 text-center m-1 border border-solid border-black-100 w-full"
+          onClick={() => {
+            if (!submittedAudioFile) return
+            if (playing) {
+              d(setPlaying(false));
+            } else {
+              d(setPlaying(true));
+            }
+          }}
+        >
+          {!playing ? "Play" : "Pause"}
+        </button>
+        <button
+          className="p-1 text-center m-1 border border-solid border-black-100 w-full"
+          onClick={() => {
+            if (!submittedAudioFile) return
+            if (looping) {
+              d(setLooping(false));
+            } else {
+              d(setLooping(true));
+            }
+          }}
+        >
+          {looping ? "Don't loop" : "Loop"}
+        </button>
+      </div>
+      <AudioSeekerVisual audioElement={audio} />
+    </div>
+  );
 }
 
 function App() {
   const inputFile = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [performFourier, setPerformFourier] = useState(false);
+  const submitted = useSelector(getSubmitted);
+  const performFourier = useSelector(getPerformFourier);
+  const playAudio = useSelector(getPlaying);
+  const loopAudio = useSelector(getLooping);
+  const d = useDispatch();
 
   const audio = useAudio({
     performFourier,
@@ -183,9 +216,10 @@ function App() {
     playAudio,
     loopAudio,
   });
+
   const handleSubmit = useCallback(
     (e: React.SyntheticEvent<HTMLInputElement>) => {
-      setSubmitted(true);
+      d(setSubmitted(true));
       if (audio !== null) {
         audio.src = URL.createObjectURL(e.currentTarget.files![0]);
       }
@@ -196,11 +230,12 @@ function App() {
     <div className="flex flex-col items-center justify-center w-full h-full">
       <div className="min-w-fit">
         <div className="flex flex-col">
+          <AudioControls audio={audio} />
           <button
             className="p-1 text-center m-1 border border-solid border-black-100"
             onClick={() => {
               if (submitted) {
-                setPerformFourier(true);
+                d(setPerformFourier(true));
                 return;
               }
               if (inputFile.current === null) return;
@@ -219,7 +254,6 @@ function App() {
           name="fileInput"
           accept=".mp3,.flac,.wav"
         />
-        <AudioSeekerVisual audioElement={audio}/>
       </div>
       <canvas
         ref={canvasRef}
