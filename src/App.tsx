@@ -1,56 +1,16 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { createMp3Encoder } from "wasm-media-encoders";
-import { motion, useAnimationFrame } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getPlaying,
   getLooping,
   getPerformFourier,
   getSubmitted,
-  setPlaying,
-  setLooping,
   setPerformFourier,
   setSubmitted,
 } from "./store";
+import { AudioControls } from "./AudioControls"
 import "./App.css";
-
-function AudioSeekerVisual({
-  audioElement,
-}: {
-  audioElement: HTMLAudioElement | null;
-}) {
-  const d = useDispatch()
-  const seekerRef = useRef<HTMLDivElement | null>(null)
-  useAnimationFrame(() => {
-    if (seekerRef.current) {
-      const ratio = ((audioElement?.currentTime ?? 0) / (audioElement?.duration ?? 1))
-      if (ratio === 1) {
-        d(setPlaying(false))
-      }
-      seekerRef.current.style.transform = `translateX(${ratio * 200}px)`
-    }
-  })
-  return (
-    <div className="h-px relative w-[200px] flex items-center m-2 border border-black-100">
-      <div className="absolute">
-        <motion.div
-          ref={seekerRef}
-          drag="x"
-          dragConstraints={{ left: 0, right: 200 }}
-          dragElastic={false}
-          dragMomentum={false}
-          className="h-[20px] w-[10px] bg-black rounded"
-          onDrag={(_, info) => {
-            if (!audioElement) return;
-            const ratio = info.offset.x / 200;
-            audioElement.currentTime = ratio * audioElement.duration;
-          }}
-          layout
-        ></motion.div>
-      </div>
-    </div>
-  );
-}
 
 function useAudio({
   performFourier,
@@ -158,46 +118,6 @@ function useAudio({
   }, [performFourier, audio, audioContext, mediaElementSrc, cvs]);
 
   return audio;
-}
-
-function AudioControls({ audio } : { audio: HTMLAudioElement | null }) {
-  const d = useDispatch();
-  const playing = useSelector(getPlaying);
-  const looping = useSelector(getLooping);
-  const submittedAudioFile = useSelector(getSubmitted)
-  return (
-    <div>
-      <div className="flex">
-        <button
-          className="p-1 text-center m-1 border border-solid border-black-100 w-full"
-          onClick={() => {
-            if (!submittedAudioFile) return
-            if (playing) {
-              d(setPlaying(false));
-            } else {
-              d(setPlaying(true));
-            }
-          }}
-        >
-          {!playing ? "Play" : "Pause"}
-        </button>
-        <button
-          className="p-1 text-center m-1 border border-solid border-black-100 w-full"
-          onClick={() => {
-            if (!submittedAudioFile) return
-            if (looping) {
-              d(setLooping(false));
-            } else {
-              d(setLooping(true));
-            }
-          }}
-        >
-          {looping ? "Don't loop" : "Loop"}
-        </button>
-      </div>
-      <AudioSeekerVisual audioElement={audio} />
-    </div>
-  );
 }
 
 function App() {
