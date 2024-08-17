@@ -9,29 +9,24 @@ import {
   setPerformFourier,
   setSubmitted,
 } from "./store";
-import { AudioControls } from "./AudioControls"
+import { AudioControls } from "./AudioControls";
 import "./App.css";
 
-function useAudio({
-  performFourier,
-  submitted,
-  cvs,
-  playAudio,
-  loopAudio,
-}: {
-  performFourier: boolean;
-  submitted: boolean;
-  cvs: HTMLCanvasElement | null;
-  playAudio: boolean;
-  loopAudio: boolean;
-}) {
+function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [mediaElementSrc, setMediaElementSource] =
     useState<MediaElementAudioSourceNode | null>(null);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
+  const [offlineAudioContextMediaElement, setOfflineAudioContextMediaElement] =
+    useState<MediaElementAudioSourceNode | null>(null);
   const [offlineAudioContext, setOfflineAudioContext] =
     useState<OfflineAudioContext | null>(null);
+
+  const submitted = useSelector(getSubmitted);
+  const performFourier = useSelector(getPerformFourier);
+  const playing = useSelector(getPlaying);
+  const looping = useSelector(getLooping);
 
   useEffect(() => {
     const newAudio = new Audio();
@@ -54,7 +49,25 @@ function useAudio({
   }, []);
 
   useEffect(() => {
-    if (audio && analyserNode && playAudio && audioContext && mediaElementSrc) {
+    if (audio && audioContext && offlineAudioContext) {
+      fetch(audio.src)
+        .then((res) => res.arrayBuffer())
+        .then((arr) => audioContext.decodeAudioData(arr))
+        .then(
+          (decodedBuffer) =>
+            new AudioBufferSourceNode(offlineAudioContext, {
+              buffer: decodedBuffer,
+            }),
+        )
+        .then((sourceNode) => {
+          sourceNode.start();
+          sourceNode.connect(offlineAudioContext.destination);
+        });
+    }
+  }, [audio, audioContext, offlineAudioContext]);
+
+  useEffect(() => {
+    if (audio && analyserNode && playing && audioContext && mediaElementSrc) {
       mediaElementSrc.connect(analyserNode).connect(audioContext.destination);
       audio
         .play()
@@ -84,18 +97,19 @@ function useAudio({
         .catch((e) => console.error(e));
     }
 
-    if (audio && !playAudio) {
+    if (audio && !playing) {
       audio.pause();
     }
 
     if (audio) {
-      audio.loop = loopAudio;
+      audio.loop = looping;
     }
-  }, [playAudio, loopAudio]);
+  }, [playing, looping]);
 
   useEffect(() => {
     if (submitted && audio && audioContext) {
-      setMediaElementSource(audioContext.createMediaElementSource(audio));
+      const newMediaElementSrc = audioContext.createMediaElementSource(audio);
+      setMediaElementSource(newMediaElementSrc);
       setAnalyserNode(new AnalyserNode(audioContext));
       audioContext.resume().catch((e) => console.error(e));
     }
@@ -107,15 +121,48 @@ function useAudio({
       audio &&
       audioContext &&
       mediaElementSrc &&
-      analyserNode
+      analyserNode &&
+      offlineAudioContext
     ) {
-      let frequencyData = new Float32Array(analyserNode.frequencyBinCount);
-      setInterval(() => {
-        analyserNode.getFloatFrequencyData(frequencyData);
-        console.log(frequencyData);
-      }, 500);
+      //let frequencyData = new Float32Array(analyserNode.frequencyBinCount);
+      //setInterval(() => {
+      //  analyserNode.getFloatFrequencyData(frequencyData);
+      //  console.log(frequencyData);
+      //}, 500);
+      offlineAudioContext.startRendering().then((buffer) => {
+        createMp3Encoder().then((encoder) => {
+          encoder.configure({
+            sampleRate: offlineAudioContext.sampleRate,
+            channels: 2,
+          });
+          const final = new Uint8Array(
+            offlineAudioContext.sampleRate * audio.duration,
+          );
+
+          const mp3Data = encoder.encode([
+            buffer.getChannelData(0),
+            buffer.getChannelData(1),
+          ]);
+          final.set(mp3Data, 0);
+          const finalized = encoder.finalize();
+          final.set(finalized, mp3Data.length);
+
+          const file = new File([final], "output.mp3");
+          const anchor = document.createElement("a");
+          anchor.href = URL.createObjectURL(file);
+          anchor.download = "output.mp3";
+          anchor.click();
+        });
+      });
     }
-  }, [performFourier, audio, audioContext, mediaElementSrc, cvs]);
+  }, [
+    performFourier,
+    audio,
+    audioContext,
+    mediaElementSrc,
+    cvs,
+    offlineAudioContext,
+  ]);
 
   return audio;
 }
@@ -124,17 +171,10 @@ function App() {
   const inputFile = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const submitted = useSelector(getSubmitted);
-  const performFourier = useSelector(getPerformFourier);
-  const playAudio = useSelector(getPlaying);
-  const loopAudio = useSelector(getLooping);
   const d = useDispatch();
 
   const audio = useAudio({
-    performFourier,
-    submitted,
     cvs: canvasRef.current,
-    playAudio,
-    loopAudio,
   });
 
   const handleSubmit = useCallback(

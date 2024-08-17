@@ -24,7 +24,7 @@ function VolumeSeekerVisual({
       }
       seekerRef.current.style.transform = `translateX(${audioElement.volume * 200}px)`;
       if (displayRef.current) {
-        displayRef.current.innerHTML = `${Math.floor(audioElement.volume * 100)}%`
+        displayRef.current.innerHTML = `${Math.floor(audioElement.volume * 100)}%`;
       }
     }
   });
@@ -42,7 +42,7 @@ function VolumeSeekerVisual({
           className="h-[20px] w-[10px] bg-black rounded"
           onUpdate={({ x }: { x: number }) => {
             if (!audioElement) return;
-            audioElement.volume = x / 200
+            audioElement.volume = x / 200;
           }}
         ></motion.div>
       </div>
@@ -66,9 +66,9 @@ function AudioSeekerVisual({
       }
       const ratio = audioElement.currentTime / audioElement.duration;
       seekerRef.current.style.transform = `translateX(${ratio * 200}px)`;
-      const seconds = String(Math.floor((audioElement.currentTime % 60)) % 100)
+      const seconds = String(Math.floor(audioElement.currentTime % 60) % 100);
       if (displayRef.current) {
-        displayRef.current.innerHTML = `${Math.floor(audioElement.currentTime / 60)}:${seconds.length > 1 ? seconds : `0${seconds}`}`
+        displayRef.current.innerHTML = `${Math.floor(audioElement.currentTime / 60)}:${seconds.length > 1 ? seconds : `0${seconds}`}`;
       }
     }
   });
@@ -90,7 +90,7 @@ function AudioSeekerVisual({
         ></motion.div>
       </div>
       <div ref={displayRef} className="m-1 text-center">
-      0:00
+        0:00
       </div>
     </div>
   );
