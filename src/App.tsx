@@ -9,6 +9,7 @@ import {
   setSubmitted,
 } from "./store";
 import { AudioControls } from "./AudioControls";
+import WavEncoder from "wav-encoder";
 import "./App.css";
 
 function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
@@ -17,8 +18,6 @@ function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
   const [mediaElementSrc, setMediaElementSource] =
     useState<MediaElementAudioSourceNode | null>(null);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
-  const [offlineAudioContextMediaElement, setOfflineAudioContextMediaElement] =
-    useState<MediaElementAudioSourceNode | null>(null);
   const [offlineAudioContext, setOfflineAudioContext] =
     useState<OfflineAudioContext | null>(null);
 
@@ -129,6 +128,20 @@ function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
       //  console.log(frequencyData);
       //}, 500);
       offlineAudioContext.startRendering().then((buffer) => {
+        const input = {
+          sampleRate: offlineAudioContext.sampleRate,
+          channelData: [
+            buffer.getChannelData(0),
+            buffer.getChannelData(1)
+          ]
+        }
+        WavEncoder.encode(input).then(encoded => {
+          const file = new File([encoded], "output.wav")
+          const anchor = document.createElement("a")
+          anchor.href = URL.createObjectURL(file)
+          anchor.download = "output.wav"
+          anchor.click()
+        })
       });
     }
   }, [
