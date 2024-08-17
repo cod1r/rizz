@@ -15,6 +15,7 @@ function VolumeSeekerVisual({
   audioElement: HTMLAudioElement | null;
 }) {
   const seekerRef = useRef<HTMLDivElement | null>(null);
+  const displayRef = useRef<HTMLDivElement | null>(null);
   const submitted = useSelector(getSubmitted);
   useAnimationFrame(() => {
     if (seekerRef.current) {
@@ -22,6 +23,9 @@ function VolumeSeekerVisual({
         return;
       }
       seekerRef.current.style.transform = `translateX(${audioElement.volume * 200}px)`;
+      if (displayRef.current) {
+        displayRef.current.innerHTML = `${Math.floor(audioElement.volume * 100)}%`
+      }
     }
   });
   if (!audioElement) return null;
@@ -30,20 +34,19 @@ function VolumeSeekerVisual({
       <div className="h-px relative w-[200px] flex items-center m-2 border border-black-100">
         <motion.div
           ref={seekerRef}
+          initial={{ x: audioElement.volume * 200 }}
           drag={submitted ? "x" : undefined}
           dragConstraints={{ left: 0, right: 200 }}
           dragElastic={false}
           dragMomentum={false}
           className="h-[20px] w-[10px] bg-black rounded"
-          onDragEnd={(_, info) => {
+          onUpdate={({ x }: { x: number }) => {
             if (!audioElement) return;
-            const volumeOffset = info.offset.x / 200;
-            audioElement.volume += volumeOffset;
+            audioElement.volume = x / 200
           }}
-          layout
         ></motion.div>
       </div>
-      <div className="m-1 text-center">{audioElement.volume * 100}%</div>
+      <div className="m-1 text-center" ref={displayRef}></div>
     </div>
   );
 }
@@ -54,6 +57,7 @@ function AudioSeekerVisual({
   audioElement: HTMLAudioElement | null;
 }) {
   const seekerRef = useRef<HTMLDivElement | null>(null);
+  const displayRef = useRef<HTMLDivElement | null>(null);
   const submitted = useSelector(getSubmitted);
   useAnimationFrame(() => {
     if (seekerRef.current) {
@@ -62,10 +66,13 @@ function AudioSeekerVisual({
       }
       const ratio = audioElement.currentTime / audioElement.duration;
       seekerRef.current.style.transform = `translateX(${ratio * 200}px)`;
+      const seconds = String(Math.floor((audioElement.currentTime % 60)) % 100)
+      if (displayRef.current) {
+        displayRef.current.innerHTML = `${Math.floor(audioElement.currentTime / 60)}:${seconds.length > 1 ? seconds : `0${seconds}`}`
+      }
     }
   });
   if (!audioElement) return null;
-  const seconds = String(audioElement.currentTime % 60)
   return (
     <div className="">
       <div className="h-px relative w-[200px] flex items-center m-2 border border-black-100">
@@ -76,17 +83,14 @@ function AudioSeekerVisual({
           dragElastic={false}
           dragMomentum={false}
           className="h-[20px] w-[10px] bg-black rounded"
-          onDragEnd={(_, info) => {
+          onUpdate={({ x }: { x: number }) => {
             if (!audioElement) return;
-            const timeOffset = (info.offset.x / 200) * audioElement.duration;
-            console.log(audioElement.currentTime, timeOffset, info.offset.x);
-            audioElement.currentTime += timeOffset;
+            audioElement.currentTime = (x / 200) * audioElement.duration;
           }}
-          layout
         ></motion.div>
       </div>
-      <div className="m-1 text-center">
-        {audioElement.currentTime / 60}:{seconds.length > 1 ? seconds : `0${seconds}`}
+      <div ref={displayRef} className="m-1 text-center">
+      0:00
       </div>
     </div>
   );
