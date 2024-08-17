@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { createMp3Encoder } from "wasm-media-encoders";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getPlaying,
@@ -130,29 +129,6 @@ function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
       //  console.log(frequencyData);
       //}, 500);
       offlineAudioContext.startRendering().then((buffer) => {
-        createMp3Encoder().then((encoder) => {
-          encoder.configure({
-            sampleRate: offlineAudioContext.sampleRate,
-            channels: 2,
-          });
-          const final = new Uint8Array(
-            offlineAudioContext.sampleRate * audio.duration,
-          );
-
-          const mp3Data = encoder.encode([
-            buffer.getChannelData(0),
-            buffer.getChannelData(1),
-          ]);
-          final.set(mp3Data, 0);
-          const finalized = encoder.finalize();
-          final.set(finalized, mp3Data.length);
-
-          const file = new File([final], "output.mp3");
-          const anchor = document.createElement("a");
-          anchor.href = URL.createObjectURL(file);
-          anchor.download = "output.mp3";
-          anchor.click();
-        });
       });
     }
   }, [
