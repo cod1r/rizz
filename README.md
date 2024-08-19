@@ -32,19 +32,23 @@ Discrete Fourier Transform:
 
 Great Video by [Simon Xu](https://www.youtube.com/watch?v=mkGsMWi_j4Q) on youtube
 
-    Notes:
-        - When the wave form function and the analysing function are similar, they'll multiply and sum
-        to a large coefficient and if they are disimilar, they'll multiply and sum to a small coefficient
-        - a "frequency bin" is just a discrete frequency value after the discrete fourier transform is applied
-        - use euler's formula (cos(x) + isin(x)) instead of e^(i * x)
-        - the nyquist frequency is also known as the folding frequency
-            - get rid of all values above the nyquist limit (sampling frequency / 2)
-            - double all values under the nyquist limit
-        - the magnitude of the real + imaginery vector after applying DFT corresponds to the amplitude of the sin wave at that frequency bin at that phase (angle of the vector)
+Notes:
+    - When the wave form function and the analysing function are similar, they'll multiply and sum
+    to a large coefficient and if they are disimilar, they'll multiply and sum to a small coefficient
+    - a "frequency bin" is just a discrete frequency value after the discrete fourier transform is applied
+    - use euler's formula (cos(x) + isin(x)) instead of e^(i * x)
+    - the nyquist frequency is also known as the folding frequency
+        - get rid of all values above the nyquist limit (sampling frequency / 2)
+        - double all values under the nyquist limit
+    - the magnitude of the real + imaginery vector after applying DFT corresponds to the amplitude of the sin wave at that frequency bin at that phase (angle of the vector)
 
-Decibel
-(because that's what each array value represents for frequency once returned from getFloatFrequencyData()):
+Decibel:
+    - (because that's what each array value represents for frequency once returned from getFloatFrequencyData()):
     - relative unit of measurement that is 1 tenth of a Bel
+
+Pulse Code Modulation:
+    - Method to digitally represent analog signals
+    - values are quantized (processed) to be digital
 
 
 Web Audio API Notes:

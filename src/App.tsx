@@ -9,10 +9,11 @@ import {
   setSubmitted,
 } from "./store";
 import { AudioControls } from "./AudioControls";
+import { TimeDomainVisual } from "./TimeDomainVisual"
 import WavEncoder from "wav-encoder";
 import "./App.css";
 
-function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
+function useAudio() {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [mediaElementSrc, setMediaElementSource] =
@@ -65,50 +66,26 @@ function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
   }, [audio, audioContext, offlineAudioContext]);
 
   useEffect(() => {
-    if (audio && analyserNode && playing && audioContext && mediaElementSrc) {
-      mediaElementSrc.connect(analyserNode).connect(audioContext.destination);
-      audio
-        .play()
-        .then(() => {
-          let arr = new Float32Array(analyserNode.fftSize);
-          const draw = () => {
-            if (!cvs) throw Error("cvs null");
-            requestAnimationFrame(draw);
-            analyserNode.getFloatTimeDomainData(arr);
-            const xStep = cvs.width / arr.length;
-            const ctx = cvs.getContext("2d");
-            if (!ctx) throw Error("ctx null");
-            ctx.clearRect(0, 0, cvs.width, cvs.height);
-            ctx.beginPath();
-            ctx.strokeStyle = "black";
-            ctx.moveTo(0, cvs.height / 2);
-            for (let i = 0; i < arr.length; ++i) {
-              const y = cvs.height / 2 + -arr[i] * cvs.height;
-              ctx.lineTo(i * xStep, y);
-            }
-            ctx.stroke();
-          };
-          if (cvs) {
-            requestAnimationFrame(draw);
-          }
-        })
-        .catch((e) => console.error(e));
-    }
-
-    if (audio && !playing) {
-      audio.pause();
+    if (audio) {
+      if (!playing) {
+        audio.pause();
+      } else {
+        audio.play();
+      }
     }
 
     if (audio) {
       audio.loop = looping;
     }
-  }, [playing, looping]);
+  }, [playing, looping])
 
   useEffect(() => {
     if (submitted && audio && audioContext) {
       const newMediaElementSrc = audioContext.createMediaElementSource(audio);
       setMediaElementSource(newMediaElementSrc);
-      setAnalyserNode(new AnalyserNode(audioContext));
+      const newAnalyserNode = new AnalyserNode(audioContext)
+      setAnalyserNode(newAnalyserNode);
+      newMediaElementSrc.connect(newAnalyserNode).connect(audioContext.destination);
       audioContext.resume().catch((e) => console.error(e));
     }
   }, [submitted]);
@@ -149,22 +126,18 @@ function useAudio({ cvs }: { cvs: HTMLCanvasElement | null }) {
     audio,
     audioContext,
     mediaElementSrc,
-    cvs,
     offlineAudioContext,
   ]);
 
-  return audio;
+  return { audio, analyserNode };
 }
 
 function App() {
   const inputFile = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const submitted = useSelector(getSubmitted);
   const d = useDispatch();
 
-  const audio = useAudio({
-    cvs: canvasRef.current,
-  });
+  const { audio, analyserNode } = useAudio();
 
   const handleSubmit = useCallback(
     (e: React.SyntheticEvent<HTMLInputElement>) => {
@@ -204,10 +177,7 @@ function App() {
           accept=".mp3,.flac,.wav"
         />
       </div>
-      <canvas
-        ref={canvasRef}
-        className="m-1 border-black-100 border border-solid"
-      ></canvas>
+      <TimeDomainVisual audio={audio} analyserNode={analyserNode} />
     </div>
   );
 }
