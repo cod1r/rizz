@@ -1,16 +1,22 @@
-import { useEffect, useRef } from "react"
-import { useSelector } from "react-redux"
-import { getPlaying } from "./store"
-export function TimeDomainVisual({ audio, analyserNode }: { audio: HTMLAudioElement | null, analyserNode: AnalyserNode | null}) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const playing = useSelector(getPlaying)
+import { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { getPlaying } from "./store";
+export function TimeDomainVisual({
+  audio,
+  analyserNode,
+}: {
+  audio: HTMLAudioElement | null;
+  analyserNode: AnalyserNode | null;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const playing = useSelector(getPlaying);
   useEffect(() => {
     if (audio && analyserNode && playing) {
       audio
         .play()
         .then(() => {
           let arr = new Float32Array(analyserNode.fftSize);
-          const cvs = canvasRef.current
+          const cvs = canvasRef.current;
           const draw = () => {
             if (!cvs) throw Error("cvs null");
             requestAnimationFrame(draw);
@@ -34,10 +40,11 @@ export function TimeDomainVisual({ audio, analyserNode }: { audio: HTMLAudioElem
         })
         .catch((e) => console.error(e));
     }
-
   }, [playing]);
-  return <canvas
-        ref={canvasRef}
-        className="m-1 border-black-100 border border-solid"
-      ></canvas>
+  return (
+    <canvas
+      ref={canvasRef}
+      className="m-1 border-black-100 border border-solid"
+    ></canvas>
+  );
 }
