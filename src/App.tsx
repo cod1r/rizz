@@ -7,6 +7,7 @@ import {
 } from "./store";
 import { AudioControls } from "./AudioControls";
 import { TimeDomainVisual } from "./TimeDomainVisual"
+import { FrequencyVisual } from "./FrequencyVisual"
 import { useAudio } from "./useAudio"
 import "./App.css";
 
@@ -56,6 +57,7 @@ function App() {
         />
       </div>
       <TimeDomainVisual audio={audio} analyserNode={analyserNode} />
+      <FrequencyVisual audio={audio} analyserNode={analyserNode} />
     </div>
   );
 }

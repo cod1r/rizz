@@ -45,6 +45,8 @@ Notes:
 Decibel:
     - (because that's what each array value represents for frequency once returned from getFloatFrequencyData()):
     - relative unit of measurement that is 1 tenth of a Bel
+    - expresses a ratio between two values
+    - equal to 10*log_10(power ratio)
 
 Pulse Code Modulation:
     - Method to digitally represent analog signals
@@ -56,3 +58,6 @@ Web Audio API Notes:
     - look into how getFloatFrequencyData works and its return format
     - offlineaudiocontext can "render" audio super fast and doesn't need to render it to hardware (" like the speakers ")
     - How do we get audio info for a certain segment of the audio
+        - audiobuffers, we can get seconds or duration by dividing length of the audiobuffer by sampleRate
+    - getFloatFrequencyData returns data where each value/element is the decibel of amplitude. the amplitude is the y or range and frequency is the x or domain
+    - "The frequencies are spread linearly from 0 to 1/2 of the sample rate. For example, for a 48000 Hz sample rate, the last item of the array will represent the decibel value for 24000 Hz."
