@@ -8,6 +8,7 @@ export function useAudio() {
   const [mediaElementSrc, setMediaElementSource] =
     useState<MediaElementAudioSourceNode | null>(null);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
+  const [oscillatorNode, setOscillatorNode] = useState<OscillatorNode | null>(null)
   const [offlineAudioContext, setOfflineAudioContext] =
     useState<OfflineAudioContext | null>(null);
 
@@ -21,6 +22,9 @@ export function useAudio() {
     setAudio(newAudio);
     const newAudioContext = new AudioContext();
     setAudioContext(newAudioContext);
+    const newOscillatorNode = new OscillatorNode(newAudioContext)
+    newOscillatorNode.connect(newAudioContext.destination)
+    setOscillatorNode(newOscillatorNode)
     function canPlayHandler() {
       const offlineAudioContext = new OfflineAudioContext({
         numberOfChannels: 2,
@@ -118,6 +122,6 @@ export function useAudio() {
     offlineAudioContext,
   ]);
 
-  return { audio, analyserNode };
+  return { audio, analyserNode, oscillatorNode, audioContext, offlineAudioContext };
 }
 

@@ -9,6 +9,7 @@ import { AudioControls } from "./AudioControls";
 import { TimeDomainVisual } from "./TimeDomainVisual"
 import { FrequencyVisual } from "./FrequencyVisual"
 import { useAudio } from "./useAudio"
+import { FrequencyPlayer } from "./FrequencyPlayer"
 import "./App.css";
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
   const submitted = useSelector(getSubmitted);
   const d = useDispatch();
 
-  const { audio, analyserNode } = useAudio();
+  const { audio, analyserNode, offlineAudioContext } = useAudio();
 
   const handleSubmit = useCallback(
     (e: React.SyntheticEvent<HTMLInputElement>) => {
@@ -58,6 +59,7 @@ function App() {
       </div>
       <TimeDomainVisual audio={audio} analyserNode={analyserNode} />
       <FrequencyVisual audio={audio} analyserNode={analyserNode} />
+      <FrequencyPlayer offlineAudioContext={offlineAudioContext} />
     </div>
   );
 }
