@@ -29,7 +29,7 @@ function Interval({
         const endParseIdx = transform.lastIndexOf("p")
         let x = parseInt(transform.slice(startParseIdx, endParseIdx))
         if (isNaN(x)) {
-          console.warn(transform, transform.slice(startParseIdx, endParseIdx))
+          //console.warn(transform, transform.slice(startParseIdx, endParseIdx))
           x = startPx
         }
         middleSectionRef.current.style.left=`${x}px`
@@ -39,9 +39,8 @@ function Interval({
         const startParseIdxForEnd = transformForEnd.lastIndexOf("(") + 1
         const endParseIdxForEnd = transformForEnd.lastIndexOf("p")
         let xForEnd = parseInt(transformForEnd.slice(startParseIdxForEnd, endParseIdxForEnd))
-        console.log(xForEnd)
         if (isNaN(xForEnd)) {
-          console.warn(transformForEnd, transformForEnd.slice(startParseIdxForEnd, endParseIdxForEnd))
+          //console.warn(transformForEnd, transformForEnd.slice(startParseIdxForEnd, endParseIdxForEnd))
           xForEnd = 200 - xForEnd - 10
         }
         middleSectionRef.current.style.right=`${200 - xForEnd - 10}px`
