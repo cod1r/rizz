@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
+import { motion, useAnimationFrame } from "framer-motion";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAudio } from "./useAudio";
 function Interval({
   start,
@@ -14,34 +14,69 @@ function Interval({
   setStart: React.Dispatch<React.SetStateAction<number>>;
   setEnd: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  // code is 190 because it is 200 - (20 / 2)
-  // 20 is the width of the slider
-  const endPx = useMemo(() => (end / maxValue) * 190, [end])
-  const startPx = useMemo(() => (start / maxValue) * 190, [start])
+  const endPx = useMemo(() => (end / maxValue) * 200, [end])
+  const startPx = useMemo(() => (start / maxValue) * 200, [start])
+  const seekerStartRef = useRef<HTMLDivElement | null>(null)
+  const seekerEndRef = useRef<HTMLDivElement | null>(null)
+  const middleSectionRef = useRef<HTMLDivElement | null>(null)
   console.log('start', startPx, 'end', endPx)
+  useAnimationFrame(() => {
+    if (middleSectionRef.current) {
+      if (seekerStartRef.current && seekerEndRef.current) {
+      {
+        const transform = seekerStartRef.current.style.transform
+        const startParseIdx = transform.lastIndexOf("(") + 1
+        const endParseIdx = transform.lastIndexOf("p")
+        let x = parseInt(transform.slice(startParseIdx, endParseIdx))
+        if (isNaN(x)) {
+          console.warn(transform, transform.slice(startParseIdx, endParseIdx))
+          x = startPx
+        }
+        middleSectionRef.current.style.left=`${x}px`
+      }
+      {
+        const transformForEnd = seekerEndRef.current.style.transform
+        const startParseIdxForEnd = transformForEnd.lastIndexOf("(") + 1
+        const endParseIdxForEnd = transformForEnd.lastIndexOf("p")
+        let xForEnd = parseInt(transformForEnd.slice(startParseIdxForEnd, endParseIdxForEnd))
+        console.log(xForEnd)
+        if (isNaN(xForEnd)) {
+          console.warn(transformForEnd, transformForEnd.slice(startParseIdxForEnd, endParseIdxForEnd))
+          xForEnd = 200 - xForEnd - 10
+        }
+        middleSectionRef.current.style.right=`${200 - xForEnd - 10}px`
+      }
+      }
+    }
+  });
   return (
     <div className="h-px relative w-[200px] flex items-center m-2 border border-black-100">
       <motion.div
+        initial={{ left: - 10 }}
+        ref={seekerStartRef}
         drag="x"
         dragConstraints={{ left: 0, right: endPx }}
         dragElastic={false}
         dragMomentum={false}
-        className="h-[20px] w-[10px] bg-black rounded"
+        className="h-[20px] w-[10px] bg-black rounded relative"
         onDragEnd={(_, info) => {
           const clamped = info.offset.x < 0 ? Math.max(-startPx, info.offset.x) : Math.min(endPx - startPx, info.offset.x)
-          const ratio = clamped / 190
+          const ratio = clamped / 200
           setStart(ratio * maxValue + start)
         }}
       ></motion.div>
+      <div ref={middleSectionRef} className="h-px bg-black absolute p-0 m-0"></div>
       <motion.div
+        initial={{ left: - 10 }}
+        ref={seekerEndRef}
         drag="x"
         dragConstraints={{ left: startPx, right: 200 - 10 }}
         dragElastic={false}
         dragMomentum={false}
-        className="h-[20px] w-[10px] bg-black rounded"
+        className="h-[20px] w-[10px] bg-black rounded relative"
         onDragEnd={(_, info) => {
-          const clamped = info.offset.x < 0 ? Math.max(startPx - endPx, info.offset.x) : Math.min(200 - 10 - endPx, info.offset.x)
-          const ratio = clamped / 190
+          const clamped = info.offset.x < 0 ? Math.max(startPx - endPx, info.offset.x) : Math.min(200 - endPx, info.offset.x)
+          const ratio = clamped / 200
           setEnd(ratio * maxValue + end)
         }}
       ></motion.div>
@@ -60,6 +95,7 @@ export function FrequencyPlayer({
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [start, setStart] = useState(0)
   const [end, setEnd] = useState(0)
+  const [oscillatorStarted, setOscillatorStarted] = useState(false)
   useEffect(() => {
     if (oscillatorNode) {
       oscillatorNode.frequency.setValueAtTime(
@@ -71,7 +107,10 @@ export function FrequencyPlayer({
   useEffect(() => {
     if (oscillatorNode) {
       oscillatorNode.disconnect();
-      oscillatorNode.start();
+      if (!oscillatorStarted) {
+        oscillatorNode.start();
+        setOscillatorStarted(true)
+      }
     }
   }, [oscillatorNode]);
   useEffect(() => {
