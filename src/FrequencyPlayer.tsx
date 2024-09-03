@@ -55,6 +55,7 @@ function Interval({
         initial={{ left: - 10 }}
         ref={seekerStartRef}
         drag="x"
+        animate={{ x: startPx }}
         dragConstraints={{ left: 0, right: endPx }}
         dragElastic={false}
         dragMomentum={false}
@@ -62,7 +63,7 @@ function Interval({
         onDragEnd={(_, info) => {
           const clamped = info.offset.x < 0 ? Math.max(-startPx, info.offset.x) : Math.min(endPx - startPx, info.offset.x)
           const ratio = clamped / 200
-          setStart(ratio * maxValue + start)
+          setStart(Math.floor(ratio * maxValue + start))
         }}
       ></motion.div>
       <div ref={middleSectionRef} className="h-px bg-black absolute p-0 m-0"></div>
@@ -70,6 +71,7 @@ function Interval({
         initial={{ left: - 10 }}
         ref={seekerEndRef}
         drag="x"
+        animate={{ x: endPx }}
         dragConstraints={{ left: startPx, right: 200 - 10 }}
         dragElastic={false}
         dragMomentum={false}
@@ -77,7 +79,7 @@ function Interval({
         onDragEnd={(_, info) => {
           const clamped = info.offset.x < 0 ? Math.max(startPx - endPx, info.offset.x) : Math.min(200 - endPx, info.offset.x)
           const ratio = clamped / 200
-          setEnd(ratio * maxValue + end)
+          setEnd(Math.floor(ratio * maxValue + end))
         }}
       ></motion.div>
     </div>
@@ -121,9 +123,26 @@ export function FrequencyPlayer({
     }
   }, [offlineAudioContext]);
   if (!sampleRate) return null;
+  const seconds = offlineAudioContext.length / offlineAudioContext.sampleRate
   return (
     <div>
-      <Interval {...{ start, setStart, end, setEnd, maxValue: offlineAudioContext.length / offlineAudioContext.sampleRate }}/>
+      <div className="flex justify-center">
+        <Interval {...{ start, setStart, end, setEnd, maxValue: seconds }}/>
+      </div>
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between">
+          <label htmlFor="startSeconds">Starting second:</label>
+          <input id="startSeconds" className="p-1 m-1 border" type="number" value={start} min={0} max={end} onInput={(e) => {
+            setStart(Number(e.currentTarget.value))
+          }}/>
+        </div>
+        <div className="flex items-center justify-between">
+          <label htmlFor="endingSeconds">Ending second:</label>
+          <input id="endingSeconds" className="p-1 m-1 border" type="number" value={end} min={start} max={seconds} onInput={(e) => {
+            setEnd(Number(e.currentTarget.value))
+          }}/>
+        </div>
+      </div>
       <div className="flex">
         <button
           className="border border-black-100 p-2 w-full"
