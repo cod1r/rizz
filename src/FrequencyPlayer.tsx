@@ -129,15 +129,15 @@ export function FrequencyPlayer({
         <Interval {...{ start, setStart, end, setEnd, maxValue: seconds }}/>
       </div>
       <div className="flex flex-col">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-center justify-between">
           <label htmlFor="startSeconds">Starting second:</label>
-          <input id="startSeconds" className="p-1 m-1 border" type="number" value={start} min={0} max={end} onInput={(e) => {
+          <input id="startSeconds" className="p-1 m-1 border w-full" type="number" value={start} min={0} max={end} onInput={(e) => {
             setStart(Number(e.currentTarget.value))
           }}/>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-center justify-between">
           <label htmlFor="endingSeconds">Ending second:</label>
-          <input id="endingSeconds" className="p-1 m-1 border" type="number" value={end} min={start} max={seconds} onInput={(e) => {
+          <input id="endingSeconds" className="p-1 m-1 border w-full" type="number" value={end} min={start} max={seconds} onInput={(e) => {
             setEnd(Number(e.currentTarget.value))
           }}/>
         </div>

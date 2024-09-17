@@ -61,3 +61,9 @@ Web Audio API Notes:
         - audiobuffers, we can get seconds or duration by dividing length of the audiobuffer by sampleRate
     - getFloatFrequencyData returns data where each value/element is the decibel of amplitude. the amplitude is the y or range and frequency is the x or domain
     - "The frequencies are spread linearly from 0 to 1/2 of the sample rate. For example, for a 48000 Hz sample rate, the last item of the array will represent the decibel value for 24000 Hz."
+
+
+Current Goals/Todos:
+    1. write a wav files with some frequencies removed from some interval/segment of the original audio
+    2. in FrequencyPlayer, get sub-segments from AudioBuffers by using utility methods such as copyFromChannel and copyToChannel from the AudioBuffer interface
+    3. use sub segments to play or display frequencies in that sub segment of the audio
